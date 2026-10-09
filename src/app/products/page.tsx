@@ -1,5 +1,7 @@
 import { Pool } from "pg";
 
+export const dynamic = "force-dynamic";
+
 interface Product {
   [key: string]: string | number | boolean | null;
 }
