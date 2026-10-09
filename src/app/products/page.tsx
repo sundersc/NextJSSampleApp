@@ -15,15 +15,29 @@ async function getProducts(): Promise<{ products: Product[]; columns: string[]; 
     ssl: { rejectUnauthorized: false },
   });
 
+  console.log(`[Products] Connecting to ${process.env.DB_ENDPOINT}:5432`);
   try {
-    const result = await pool.query("SELECT * FROM Products");
-    const columns = result.fields.map((f) => f.name);
-    return { products: result.rows, columns };
+    const client = await pool.connect();
+    console.log("[Products] Connected successfully");
+    try {
+      const result = await client.query("SELECT * FROM Products");
+      console.log(`[Products] Query returned ${result.rowCount} row(s)`);
+      const columns = result.fields.map((f) => f.name);
+      return { products: result.rows, columns };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      console.error("[Products] Query error:", message);
+      return { products: [], columns: [], error: message };
+    } finally {
+      client.release();
+    }
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[Products] Connection error:", message);
     return { products: [], columns: [], error: message };
   } finally {
     await pool.end();
+    console.log("[Products] Connection pool closed");
   }
 }
 
